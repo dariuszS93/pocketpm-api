@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { prisma } from './db.js';
 
 const app = express();
 app.use(cors());
@@ -8,34 +9,54 @@ app.use(express.json());
 type Task = { id: string; title: string; done?: boolean };
 type Project = { id: string; name: string; tasks: Task[] };
 
-const projects: Project[] = [
-  {
-    id: '1',
-    name: 'PocketPM Alpha',
-    tasks: [{ id: 't1', title: 'Simple MVP' }],
-  },
-  {
-    id: '2',
-    name: 'Website Redesign',
-    tasks: [{ id: 't2', title: 'Create readme' }],
-  },
-];
-
 app.get('/health', (req, res) => res.json({ ok: true }));
-app.get('/projects', (req, res) => res.json(projects));
+app.get('/projects', async (_req, res) => {
+  try {
+    const projects: Project[] = await prisma.project.findMany({
+      include: { tasks: true },
+      orderBy: { name: 'asc'},
+    });
 
-app.post('/projects/:id/tasks', (req, res) => {
-  const { id } = req.params;
-  const { title } = req.body;
-  if (!title) return res.status(400).json({ error: 'title required' });
-  const proj = projects.find((p) => p.id === id);
-  if (!proj) return res.status(404).json({ error: 'project not found' });
-  const task = { id: `t${Date.now()}`, title };
-  proj.tasks.push(task);
-  return res.status(201).json(task);
+    res.json(projects);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+})
+
+app.post('/projects/:id/tasks', async (req, res) => {
+  try {
+    const { id: projectId } = req.params;
+    const titleRaw = req.body?.title;
+
+    const title = typeof titleRaw === 'string' ? titleRaw.trim() : '';
+    if (!title) {
+      return res.status(400).json({ error: 'title required' });
+    }
+
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      return res.status(404).json({ error: 'project not found'});
+    }
+
+    const task = await prisma.task.create({
+      data: { title, projectId },
+      select: { id: true, title: true },
+    });
+
+    return res.status(200).json(task);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Failed to add task' });
+  }
 });
 
 const port = process.env.PORT || 3001;
 app.listen(port, () =>
   console.log(`API listening on http://localhost:${port}`),
 );
+
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
