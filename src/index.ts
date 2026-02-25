@@ -12,7 +12,7 @@ type Project = { id: string; name: string; tasks: Task[] };
 app.get('/health', (req, res) => res.json({ ok: true }));
 app.get('/projects', async (_req, res) => {
   try {
-    const projects = await prisma.project.findMany({
+    const projects: Project[] = await prisma.project.findMany({
       include: { tasks: true },
       orderBy: { name: 'asc'},
     });
