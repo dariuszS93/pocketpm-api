@@ -1,6 +1,6 @@
 {
   "name": "pocketpm-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -12,7 +12,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "Dariusz Steblik",
   "license": "ISC",
   "description": "",
   "dependencies": {
