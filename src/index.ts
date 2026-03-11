@@ -14,7 +14,7 @@ app.get('/projects', async (_req, res) => {
   try {
     const projects: Project[] = await prisma.project.findMany({
       include: { tasks: true },
-      orderBy: { name: 'asc'},
+      orderBy: { name: 'asc' },
     });
 
     res.json(projects);
@@ -22,7 +22,7 @@ app.get('/projects', async (_req, res) => {
     console.error(e);
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
-})
+});
 
 app.post('/projects/:id/tasks', async (req, res) => {
   try {
@@ -34,9 +34,11 @@ app.post('/projects/:id/tasks', async (req, res) => {
       return res.status(400).json({ error: 'title required' });
     }
 
-    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) {
-      return res.status(404).json({ error: 'project not found'});
+      return res.status(404).json({ error: 'project not found' });
     }
 
     const task = await prisma.task.create({
@@ -48,6 +50,29 @@ app.post('/projects/:id/tasks', async (req, res) => {
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Failed to add task' });
+  }
+});
+
+app.patch('/tasks/:id/toggle', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.task.findUnique({ where: { id } });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'task not found' });
+    }
+
+    const updated = await prisma.task.update({
+      where: { id },
+      data: { done: !existing.done },
+      select: { id: true, title: true, done: true },
+    });
+
+    res.json(updated);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to toggle task' });
   }
 });
 
