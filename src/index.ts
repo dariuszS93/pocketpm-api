@@ -72,7 +72,25 @@ app.patch('/tasks/:id/toggle', async (req, res) => {
     res.json(updated);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: 'Failed to toggle task' });
+    return res.status(500).json({ error: 'Failed to toggle task' });
+  }
+});
+
+app.delete('/tasks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.task.findUnique({ where: { id } });
+
+    if(!existing) {
+      return res.status(404).json({ error: 'task not found' });
+    }
+
+    await prisma.task.delete({ where: { id } });
+    return res.status(204).send();
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Failed to delete task'});
   }
 });
 
