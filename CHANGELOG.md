@@ -9,7 +9,8 @@ All notable changes to this project will be documented in this file.
 - basic database schema with a `Task` model (id, title, completed, createdAt, updatedAt)
 - database seeding with sample tasks
 - README with setup instructions and Prisma Studio usage
-
+- toggling tasks as done/undone (marking completed)
+- deleting tasks (removing from database)
 ---
 
 ## Planned
